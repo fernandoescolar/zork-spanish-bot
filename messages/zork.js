@@ -3320,7 +3320,7 @@ var initializeZork = function (session) {
         if (x.MAIN !== undefined){
 			var str = x.MAIN;
 			str = str.substring(0, str.length - 1);
-			str = str.replace('\n', '\r\n');
+			str = str.replace('\n', '  \r\n');
 			str = str.replace('>', '*');
             session.send(str);
 		}

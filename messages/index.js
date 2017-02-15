@@ -13,6 +13,16 @@ var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure
 
 var bot = new builder.UniversalBot(connector);
 
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
 bot.dialog('/', function (session) {
 	try{
 		if (!session.userData || !session.userData.zorkId) {
@@ -31,21 +41,11 @@ bot.dialog('/', function (session) {
 
 bot.dialog('/hola', [
     function (session) {
-        builder.Prompts.text(session, "¿Cual es tu id de jugador?"); 
-    },
-	function (session, results){
-		var id = results.response;
-		if (!zork.sessions[id]) {
-			session.send('Comienza el juego...');
-			session.userData.zorkId = id;
-			zork.initializeZork(session);
-		} else if (zork.sessions[id]) {
-			session.userData.zorkId = id;
-			zork.sessions[id].sendMessage("mirar");
-		}
-		
+        session.send('Parece que eres nuevo');
+		session.userData.zorkId = guid();
+		session.send('Comienza el juego...');
 		session.endDialog();
-	}
+    }
 ]);
 
 if (useEmulator) {
