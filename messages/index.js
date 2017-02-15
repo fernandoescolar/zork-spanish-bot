@@ -18,6 +18,7 @@ bot.dialog('/', function (session) {
     //session.send('You said ' + session.message.text);
 	try{
 		if (session.userData && session.userData.zorkId) {
+			session.send('Comienza el juego...');
 			zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 		} else {
 			session.userData.zorkId = zork.initializeZork(session);

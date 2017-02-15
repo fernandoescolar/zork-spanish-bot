@@ -3281,7 +3281,7 @@ var FyreVM;
 /// <reference path='../../core/Engine.ts' />
 /// <reference path='../../node/node-0.11.d.ts' />
 var sessions = {};
-var sessionCounter = 0;
+var sessionCounter = 1;
 var initializeZork = function (session) {
     var fs = require('fs');
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
@@ -3317,8 +3317,14 @@ var initializeZork = function (session) {
         if (engine['glkHandlers']) {
             engine['glkHandlers'][0x2A] = function () { };
         }
-        if (x.MAIN !== undefined)
-            session.send(x.MAIN);
+        if (x.MAIN !== undefined){
+			var text = x.MAIN;
+			if (text[text.length - 1] === '>')
+				text = text.substring(0, text.length - 1);
+			if (text[text.length - 1] === '\n')
+				text = text.substring(0, text.length - 1);
+            session.send(text);
+		}
         prompt_line = x.PRPT || prompt_line;
         room = x.LOCN || room;
     };
