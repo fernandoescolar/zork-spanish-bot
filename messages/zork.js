@@ -3280,10 +3280,79 @@ var FyreVM;
  */
 /// <reference path='../../core/Engine.ts' />
 /// <reference path='../../node/node-0.11.d.ts' />
+
+var streamBuffers = require('stream-buffers');
+var Stream = require('stream');
+var fs = require('fs');
+var azure = require('azure-storage');
+
+var createAzureStorageService = function(){
+	var accessKey = 'WJtw5sVBoET5fF6ZSoVKuSxX41GoY+en1bCqzh69UE7nGxefHPuAuXZ2rA3AONpMo44QbIsfjvEq+OsuAdm4Nw==';
+    var storageAccount = 'zork';
+	return azure.createBlobService(storageAccount, accessKey);
+};
+
+var uploadFile = function(filename, bytes, callback){	
+    var containerName = 'nodejs';     
+    var blobService = createAzureStorageService();
+	
+	blobService.createContainerIfNotExists(containerName, {publicAccessLevel : 'blob'}, function(error, result, response){
+	  if(!error){
+		var buffer = new Buffer(bytes);
+		var stream = new Stream();
+        stream['_ended'] = false;
+        stream['pause'] = function() {
+            stream['_paused'] = true;
+        };
+        stream['resume'] = function() {
+            if(stream['_paused'] && !stream['_ended']) {
+                stream.emit('data', buffer);
+                stream['_ended'] = true;
+                stream.emit('end');
+            }
+        }; 
+		
+		blobService.createBlockBlobFromStream (containerName, filename, stream, bytes.length, function(error, result, response){
+		  if(!error){
+			callback(true);
+		  } else {
+			callback(false);
+		  }
+		});
+	  } else {
+		callback(false);
+	  }
+	});
+};
+
+var downloadFile = function(filename, callback){	
+    var containerName = 'nodejs';     
+    var blobService = createAzureStorageService();
+	
+	blobService.createContainerIfNotExists(containerName, {publicAccessLevel : 'blob'}, function(error, result, response){
+	  if(!error){
+		var stream = new streamBuffers.WritableStreamBuffer({
+			initialSize: (100 * 1024),   // start at 100 kilobytes.
+			incrementAmount: (10 * 1024) // grow by 10 kilobytes each time buffer overflows.
+		});
+		
+		blobService.getBlobToStream(containerName, filename, stream, function(error, result, response){
+			if(!error){
+				var buffer = stream.getContents();
+				callback(new Uint8Array(buffer));
+			} else {
+				callback(false);
+			}
+		});
+	  } else {
+		callback(false);
+	  }
+	});
+};
+
 var sessions = {};
 var initializeZork = function (session) {
 	var sessionId = session.userData.zorkId;
-    var fs = require('fs');
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
     var zorkGame = new FyreVM.MemoryAccess(0);
     var prompt_line = "";
@@ -3297,27 +3366,55 @@ var initializeZork = function (session) {
     engine.lineWanted = function (callback) {
         var callbackWrapper = function (str) { 
 			str = str.replace('abrir', 'destapar');  
-			if (str === "guardar") { str = "mirar"; saveState(); }
-			if (str === "cargar") { str = "mirar"; restoreState(); }
+			if (str === "guardar") { 
+				str = "mirar"; 
+				saveState(function(ok){
+					if (ok){
+						session.send("[Estado guardado]");
+						callback(str);
+					} else {
+						session.send("[No se pudo guardar el estado]");
+						callback(str);
+					}
+				}); 
+				return;
+			}
+			if (str === "cargar") { 
+				str = "mirar"; 
+				restoreState(function(ok){
+					if (ok){
+						session.send("[Estado cargado]");
+						callback(str);
+					} else {
+						session.send("[No se pudo cargar el estado]");
+						callback(str);
+					}
+				}); 
+				return;
+			}
 			callback(str);
 		};
         inputStack.push(callbackWrapper);
     };
     engine.keyWanted = engine.lineWanted;
     engine.saveRequested = function (quetzal, callback) {
-        fs.writeFileSync("D:\\home\\site\\wwwroot\\messages\\" + sessionId + ".zork.fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
-        callback(true);
+        uploadFile(sessionId + ".zork.fyrevm_saved_game", new Uint8Array(quetzal.serialize()), function(ok){
+			if (!ok)
+				console.error('error saving');
+			callback(ok);
+		});
     };
     engine.loadRequested = function (callback) {
-        var x = fs.readFileSync("D:\\home\\site\\wwwroot\\messages\\" + sessionId + ".zork.fyrevm_saved_game");
-        if (x){
-        	var q = FyreVM.Quetzal.load(new Uint8Array(x));
-        	callback(q);
-        }else{
-        	console.error("could not find the save game file");
-        callback(null);
-        }
-    };
+        var x = downloadFile(sessionId + ".zork.fyrevm_saved_game", function(x){
+			if (x){
+				var q = FyreVM.Quetzal.load(x);
+				callback(q);
+			}else{
+				console.error("could not find the save game file");
+				callback(null);
+			}
+		});
+    };  
     engine.outputReady = function (x) {
         if (engine['glkHandlers']) {
             engine['glkHandlers'][0x2A] = function () { };
@@ -3339,13 +3436,16 @@ var initializeZork = function (session) {
             callback(msg);
     };
 	
-	var saveState = function (){
+	var saveState = function (callback){
+		callback = callback || function(){};
 		var q = engine.saveToQuetzal();
-		engine.saveRequested(q, function(){});
+		engine.saveRequested(q, callback);
 	}
-	var restoreState = function (){
+	var restoreState = function (callback){
+		callback = callback || function(){};
 		engine.loadRequested(function(q){
 			if (q)engine.loadFromQuetzal(q);
+			callback(q);
 		});	
 	}
 	

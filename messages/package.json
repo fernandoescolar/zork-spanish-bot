@@ -1,14 +1,16 @@
 {
-  "name": "emptybot",
+  "name": "zork-spanish",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "azure-storage": "^2.0.0",
     "botbuilder": "^3.4.2",
-    "botbuilder-azure": "0.0.1"
+    "botbuilder-azure": "0.0.1",
+    "stream-buffers": "^3.0.1"
   },
   "devDependencies": {
-      "restify": "^4.1.1"
+    "restify": "^4.1.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
