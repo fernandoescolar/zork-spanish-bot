@@ -19,7 +19,12 @@ bot.dialog('/', function (session) {
 			session.send("iniciando credenciales");
 			session.beginDialog('/hola');
 		} else {
-			zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
+			session.send("usando sesion iniciada...");
+			if (!zork.sessions[session.userData.zorkId]){
+				zork.initializeZork(session);
+			} else {
+				zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
+			}
 		}
 	} catch(ex){
 		session.send(JSON.stringify(ex));
