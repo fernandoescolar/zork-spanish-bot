@@ -23,7 +23,7 @@ bot.dialog('/', function (session) {
 			session.userData.zorkId = zork.initializeZork(session);
 		}
 	} catch(ex){
-		session.send(ex);
+		session.send(JSON.stringify(ex));
 	}
 });
 
