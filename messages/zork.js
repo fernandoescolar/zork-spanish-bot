@@ -3300,11 +3300,11 @@ var initializeZork = function (session) {
     };
     engine.keyWanted = engine.lineWanted;
     engine.saveRequested = function (quetzal, callback) {
-        fs.writeFileSync(sessionId + ".zork.fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
+        fs.writeFileSync("D:\\home\\site\\wwwroot\\messages\\" + sessionId + ".zork.fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
         callback(true);
     };
     engine.loadRequested = function (callback) {
-        var x = fs.readFileSync(sessionId + ".zork.fyrevm_saved_game");
+        var x = fs.readFileSync("D:\\home\\site\\wwwroot\\messages\\" + sessionId + ".zork.fyrevm_saved_game");
         if (x){
         	var q = FyreVM.Quetzal.load(new Uint8Array(x));
         	callback(q);
