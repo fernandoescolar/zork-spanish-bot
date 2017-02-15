@@ -3280,6 +3280,8 @@ var FyreVM;
  */
 /// <reference path='../../core/Engine.ts' />
 /// <reference path='../../node/node-0.11.d.ts' />
+var sessions = {};
+var sessionCounter = 0;
 var initializeZork = function (session) {
     var fs = require('fs');
     var buffer = fs.readFileSync('zork.ulx');
@@ -3326,7 +3328,11 @@ var initializeZork = function (session) {
         if (callback)
             callback(msg);
     };
-    session.userData = { gameLoaded: true, sendMessage: sendMessage };
+	
+	var sessionId = sessionCounter++;
+	sessions[sessionId] = { gameLoaded: true, sendMessage: sendMessage };
+	return sessionId;
 };
 
 module.exports.initializeZork = initializeZork;
+module.exports.sessions = sessions;

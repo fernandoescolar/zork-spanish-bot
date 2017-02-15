@@ -16,10 +16,10 @@ var bot = new builder.UniversalBot(connector);
 bot.dialog('/', function (session) {
     //console.log(session);
     //session.send('You said ' + session.message.text);
-	if (session.userData && session.userData.gameLoaded) {
-		session.userData.sendMessage(session.message.text);
+	if (session.userData && session.userData.zorkId) {
+		zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 	} else {
-		zork.initializeZork(session);
+		session.userData.zorkId = zork.initializeZork(session);
 	}
 });
 
