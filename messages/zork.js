@@ -3281,7 +3281,6 @@ var FyreVM;
 /// <reference path='../../core/Engine.ts' />
 /// <reference path='../../node/node-0.11.d.ts' />
 var sessions = {};
-var sessionCounter = 1;
 var initializeZork = function (session) {
     var fs = require('fs');
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
@@ -3319,10 +3318,8 @@ var initializeZork = function (session) {
         }
         if (x.MAIN !== undefined){
 			var text = x.MAIN;
-			if (text[text.length - 1] === '>')
-				text = text.substring(0, text.length - 1);
-			if (text[text.length - 1] === '\n')
-				text = text.substring(0, text.length - 1);
+			text = text.substring(0, text.length - 1);
+			
             session.send(text);
 		}
         prompt_line = x.PRPT || prompt_line;
@@ -3335,8 +3332,8 @@ var initializeZork = function (session) {
             callback(msg);
     };
 	
-	var sessionId = sessionCounter++;
-	sessions[sessionId] = { gameLoaded: true, sendMessage: sendMessage };
+	var sessionId = session.userData.zorkId;
+	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage };
 	return sessionId;
 };
 

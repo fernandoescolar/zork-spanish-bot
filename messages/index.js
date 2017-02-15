@@ -17,16 +17,56 @@ bot.dialog('/', function (session) {
     //console.log(session);
     //session.send('You said ' + session.message.text);
 	try{
-		if (session.userData && session.userData.zorkId) {
-			session.send('Comienza el juego...');
-			zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
+		if (!session.userData.zorkId) {
+			session.beginDialog('/hola');
 		} else {
-			session.userData.zorkId = zork.initializeZork(session);
+			zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 		}
 	} catch(ex){
 		session.send(JSON.stringify(ex));
 	}
 });
+
+bot.dialog('/hola', [
+    function (session) {
+        builder.Prompts.choice(session, "Hola, ¿eres un nuevo jugador?", "si|no"); 
+    },
+    function (session, results) {
+        if (results.response) {
+            if (results.response === "si"){
+				session.userData.isNew = true;
+				builder.Prompts.text(session, "¿Cual es tu id de jugador?"); 
+			} 
+            if (results.response === "no"){
+				session.userData.isNew = false;
+				builder.Prompts.text(session, "¿Cual es tu id de jugador?"); 
+			}
+        } else {
+            session.send("No lo he entendido");
+			session.endDialog();
+        }
+    },
+	function (session, results){
+		var id = results.response;
+		if (session.userData.isNew && zork.sessions[id]){
+			session.send("Ya existe este usuario");
+		}
+		if (!session.userData.isNew && !zork.sessions[id]){
+			session.send("No existe este usuario");
+		}
+		if (session.userData.isNew && !zork.sessions[id]){
+			session.send('Comienza el juego...');
+			session.userData.zorkId = id;
+			zork.initializeZork(session);
+		}
+		if (!session.userData.isNew && zork.sessions[id]){
+			session.userData.zorkId = id;
+			zork.sessions[id].sendMessage("mirar");
+		}
+		
+		session.endDialog();
+	}
+]);
 
 if (useEmulator) {
     var restify = require('restify');
