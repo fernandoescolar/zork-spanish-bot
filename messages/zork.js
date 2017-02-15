@@ -3295,7 +3295,12 @@ var initializeZork = function (session) {
     var engine = new FyreVM.Engine(new FyreVM.UlxImage(zorkGame));
     engine.glkMode = 1;
     engine.lineWanted = function (callback) {
-        var callbackWrapper = function (str) { str = str.replace('abrir', 'destapar'); callback(str); };
+        var callbackWrapper = function (str) { 
+			str = str.replace('abrir', 'destapar');  
+			if (str === "guardar") { str = "mirar"; saveState(); }
+			if (str === "cargar") { str = "mirar"; restoreState(); }
+			callback(str);
+		};
         inputStack.push(callbackWrapper);
     };
     engine.keyWanted = engine.lineWanted;
@@ -3334,7 +3339,17 @@ var initializeZork = function (session) {
             callback(msg);
     };
 	
-	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage };
+	var saveState = function (){
+		var q = engine.saveToQuetzal();
+		engine.saveRequested(q, function(){});
+	}
+	var restoreState = function (){
+		engine.loadRequested(function(q){
+			if (q)engine.loadFromQuetzal(q);
+		});	
+	}
+	
+	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage, saveState: saveState, restoreState };
 	return sessionId;
 };
 
