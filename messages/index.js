@@ -15,7 +15,8 @@ var bot = new builder.UniversalBot(connector);
 
 bot.dialog('/', function (session) {
 	try{
-		if (!session.userData.zorkId) {
+		if (!session.userData || !session.userData.zorkId) {
+			session.send("iniciando credenciales");
 			session.beginDialog('/hola');
 		} else {
 			zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
