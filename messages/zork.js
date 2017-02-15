@@ -3317,10 +3317,7 @@ var initializeZork = function (session) {
             engine['glkHandlers'][0x2A] = function () { };
         }
         if (x.MAIN !== undefined){
-			var text = x.MAIN;
-			text = text.substring(0, text.length - 1);
-			
-            session.send(text);
+            session.send(x.MAIN);
 		}
         prompt_line = x.PRPT || prompt_line;
         room = x.LOCN || room;
