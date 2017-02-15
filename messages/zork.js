@@ -3282,6 +3282,7 @@ var FyreVM;
 /// <reference path='../../node/node-0.11.d.ts' />
 var sessions = {};
 var initializeZork = function (session) {
+	var sessionId = session.userData.zorkId;
     var fs = require('fs');
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
     var zorkGame = new FyreVM.MemoryAccess(0);
@@ -3299,18 +3300,18 @@ var initializeZork = function (session) {
     };
     engine.keyWanted = engine.lineWanted;
     engine.saveRequested = function (quetzal, callback) {
-        //fs.writeFileSync(process.argv[2]+".fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
+        fs.writeFileSync(sessionId + ".zork.fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
         callback(true);
     };
     engine.loadRequested = function (callback) {
-        //let x = fs.readFileSync(process.argv[2]+".fyrevm_saved_game");
-        //if (x){
-        //	let q = FyreVM.Quetzal.load(new Uint8Array(x));
-        //	callback(q);
-        //}else{
-        //	console.error("could not find the save game file");
+        var x = fs.readFileSync(sessionId + ".zork.fyrevm_saved_game");
+        if (x){
+        	var q = FyreVM.Quetzal.load(new Uint8Array(x));
+        	callback(q);
+        }else{
+        	console.error("could not find the save game file");
         callback(null);
-        //}
+        }
     };
     engine.outputReady = function (x) {
         if (engine['glkHandlers']) {
@@ -3331,7 +3332,6 @@ var initializeZork = function (session) {
             callback(msg);
     };
 	
-	var sessionId = session.userData.zorkId;
 	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage };
 	return sessionId;
 };
