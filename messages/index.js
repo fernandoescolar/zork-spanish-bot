@@ -1,7 +1,7 @@
 "use strict";
 var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
-
+var zork = require('./zork');
 var useEmulator = (process.env.NODE_ENV == 'development');
 
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
@@ -14,8 +14,13 @@ var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure
 var bot = new builder.UniversalBot(connector);
 
 bot.dialog('/', function (session) {
-    console.log(session);
-    session.send('You said ' + session.message.text);
+    //console.log(session);
+    //session.send('You said ' + session.message.text);
+	if (session.userData && session.userData.gameLoaded) {
+		session.userData.sendMessage(session.message.text);
+	} else {
+		zork.initializeZork(session);
+	}
 });
 
 if (useEmulator) {
