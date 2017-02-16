@@ -3532,9 +3532,14 @@ var initializeZork = function (session) {
         if (x.MAIN !== undefined){
 			var str = x.MAIN;
 			str = str.substring(0, str.length - 1);
-			str = str.replace(/\n/g, '  \n');
+			//str = str.replace(/\n/g, '  \n');
 			str = str.replace('>', '*');
-            session.send(str);
+			
+			var arr = str.split("\n");
+			for(var i=0;i<arr.length;i++) {
+				session.send(arr[i]);
+			}
+            //session.send(str);
 		}
         prompt_line = x.PRPT || prompt_line;
         room = x.LOCN || room;
