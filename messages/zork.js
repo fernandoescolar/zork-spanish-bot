@@ -3459,9 +3459,22 @@ var downloadFile = function(filename, callback){
 };
 
 var sessions = {};
-var sessionsLastAccess = {};
+var checkSessions = function(){
+	var toDelete = [];
+	var date = new Date();
+	Object.keys(sessions).forEach(function(key){
+		var session = sessions[key];
+		var diff = date - session.lastDate;
+		if (diff > 60*60*100)
+			toDelete.push(key);
+	});
+	toDelete.forEach(function(key){
+		delete sessions[key];
+	});
+};
 var initializeZork = function (session) {
 	var sessionId = session.userData.zorkId;
+	var lastDate = new Date();
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
     var zorkGame = new FyreVM.MemoryAccess(0);
     var prompt_line = "";
@@ -3525,6 +3538,8 @@ var initializeZork = function (session) {
 		});
     };  
     engine.outputReady = function (x) {
+		lastDate = new Date();
+		
         if (engine['glkHandlers']) {
             engine['glkHandlers'][0x2A] = function () { };
         }
@@ -3552,6 +3567,8 @@ var initializeZork = function (session) {
     };
     engine.run();
     var sendMessage = function (msg) {
+		lastDate = new Date();
+		
         var callback = inputStack.shift();
         if (callback)
             callback(msg);
@@ -3570,9 +3587,14 @@ var initializeZork = function (session) {
 		});	
 	}
 	
-	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState };
+	sessions[session.userData.zorkId] = { gameLoaded: true, lastDate: lastDate, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState };
 	return sessionId;
 };
 
+var interval = setInterval(function() {
+  checkSessions();
+}, 30 * 60 * 1000);
+
 module.exports.initializeZork = initializeZork;
 module.exports.sessions = sessions;
+module.exports.checkSessions = checkSessions;
