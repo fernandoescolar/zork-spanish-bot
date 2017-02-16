@@ -3533,7 +3533,13 @@ var initializeZork = function (session) {
 			var str = x.MAIN;
 			str = str.substring(0, str.length - 1);
 			//str = str.replace(/\n/g, '  \n');
-			str = str.replace('>', '*');
+			var badchars = str.indexOf('<') >= 0;
+			if (str.indexOf('<')){
+				str = str.replace(/</g, '');
+				str = str.replace(/>/g, '');
+			} else {
+				str = str.replace('>', '*');
+			}
 			
 			var arr = str.split("\n");
 			for(var i=0;i<arr.length;i++) {
