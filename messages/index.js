@@ -39,13 +39,15 @@ bot.dialog('/', function (session) {
 				session.send("Para reiniciar la partida puedes introducir 'reiniciar'");
 				session.send("Para guardar el estado actual de la partida puedes introducir 'guardar'");
 				session.send("Para cargar el estado guardado de la partida puedes introducir 'cargar'");
+				session.send("Está activada una opción de autoguardado para cuando hay cierto tiempo de inactividad");
+				session.send("Más información en https://github.com/fernandoescolar/zork-spanish-bot");
 				return;
 			}
 			
 			if (!zork.sessions[session.userData.zorkId] || restart){
 				if (restart) session.send("reiniciando");
 				zork.initializeZork(session);
-				if (!restart) zork.sessions[session.userData.zorkId].restoreState(function(ok){ if(ok) { session.send("[Se ha cargado tu partida guardada]"); zork.sessions[session.userData.zorkId].sendMessage("mirar"); }});
+				if (!restart) zork.sessions[session.userData.zorkId].restoreState(function(ok){ if(ok) { session.send("Un segundo!! He encontrado una partida guardada y la he cargado"); zork.sessions[session.userData.zorkId].sendMessage("mirar"); }});
 			} else {
 				zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 			}

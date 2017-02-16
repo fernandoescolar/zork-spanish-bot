@@ -3469,6 +3469,7 @@ var checkSessions = function(){
 			toDelete.push(key);
 	});
 	toDelete.forEach(function(key){
+		sessions[key].saveState();
 		delete sessions[key];
 	});
 };
