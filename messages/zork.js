@@ -3465,7 +3465,7 @@ var checkSessions = function(){
 	Object.keys(sessions).forEach(function(key){
 		var session = sessions[key];
 		var diff = date - session.lastDate;
-		if (diff > 60*60*100)
+		if (diff > 60*60*1000)
 			toDelete.push(key);
 	});
 	toDelete.forEach(function(key){
