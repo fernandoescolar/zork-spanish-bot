@@ -23,13 +23,29 @@ function guid() {
     s4() + '-' + s4() + s4() + s4();
 }
 
+var helpStrings = ['ayuda', 'help', 'sobre', 'info', 'pista'];
 bot.dialog('/', function (session) {
 	try{
 		if (!session.userData || !session.userData.zorkId) {
 			session.beginDialog('/hola');
 		} else {
-			if (!zork.sessions[session.userData.zorkId]){
+			var restart = session.message.text.toLowerCase() === 'reiniciar';
+			var help = helpStrings.indexOf(session.message.text.toLowerCase()) >= 0;
+			
+			if (help){
+				session.send("Ayuda:");
+				session.send("Este es un juego online de tipo texto llamado Zork.");
+				session.send("Para ver este menú puedes introducir 'ayuda'");
+				session.send("Para reiniciar la partida puedes introducir 'reiniciar'");
+				session.send("Para guardar el estado actual de la partida puedes introducir 'guardar'");
+				session.send("Para cargar el estado guardado de la partida puedes introducir 'cargar'");
+				return;
+			}
+			
+			if (!zork.sessions[session.userData.zorkId] || restart){
+				if (restart) session.send("reiniciando");
 				zork.initializeZork(session);
+				if (!restart) zork.sessions[session.userData.zorkId].restoreState(function(ok){ if(ok) zork.sessions[session.userData.zorkId].sendMessage("mirar"); });
 			} else {
 				zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 			}
@@ -41,6 +57,7 @@ bot.dialog('/', function (session) {
 
 bot.dialog('/hola', [
     function (session) {
+		session.send('Versión Aplha');
         session.send('Parece que eres nuevo');
 		session.userData.zorkId = guid();
 		session.send('Comienza el juego...');

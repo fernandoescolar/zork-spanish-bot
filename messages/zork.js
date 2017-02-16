@@ -1,5 +1,5 @@
 /*
- * TypeScript port by Thilo Planz
+ * TypeScript port by Thilo Planz and More GLK calls by Fernando Escolar
  *
  * https://gist.github.com/thiloplanz/6abf04f957197e9e3912
  */
@@ -207,6 +207,7 @@ var FyreVM;
             return this.id;
         };
         GlkWindowStream.prototype.put = function (s) {
+			this.engine['outputBuffer'].setChannel(this.id === 1 ? 'MAIN' : 'Channel' + this.id);
             this.engine['outputBuffer'].write(s);
         };
         GlkWindowStream.prototype.close = function () {
@@ -277,9 +278,85 @@ var FyreVM;
     function initGlkHandlers() {
         var handlers = [];
         //glkHandlers.Add(0x0139, glk_stream_open_memory_uni);
-        // glk_stream_iterate
+		
+		// glk_gestalt
+        handlers[0x04] = function (sel, val) {
+			switch (sel) {
+				case 0: // gestalt_Version
+						/* This implements Glk spec version 0.7.4. */
+					return 0x00000704;
+				case 1:
+					return 0; 
+				case 2: // gestalt_LineInput
+					if (val > 0x10FFFF)
+						return 0;
+					if ((val >= 0 && val < 32) || (val >= 127 && val < 160))
+						return 0;
+					return 1;
+				case 3:
+					if ((val > 0x10FFFF) 
+						|| (val >= 0 && val < 32) 
+						|| (val >= 127 && val < 160)) {
+						
+						return 0; // gestalt_CharOutput_CannotPrint
+					}
+					return 2; 
+				case 17: // gestalt_LineInputEcho
+					return 1;
+				default:
+					return 0;
+			}
+        };
+		
+		// glk_window_iterate
+        handlers[0x20] = function (win_id) {
+            if (this.glkWindowOpen && win_id === 0)
+                return 1;
+            return 0;
+        };
+		
+		// glk_window_open
+        handlers[0x23] = function (splitwin, method, size, wintype, rock) {
+			if (!this.glkWindowCounter) this.glkWindowCounter = 1;
+			var WinTypes = {
+				AllTypes : 0,
+				Pair : 1,
+				Blank : 2,
+				TextBuffer : 3,
+				TextGrid : 4,
+				Graphics : 5
+			};
+			var id = this.glkWindowCounter++;
+            this.glkWindowOpen = true;
+            this.glkStreams[id] = new GlkWindowStream(id, this);
+			this.glkStreams[id].size = size;
+            return id;
+        };
+		
+		// glk_window_get_size
+        handlers[0x25] = function (id) {
+			if (this.glkCurrentStream && this.glkCurrentStream.size)
+				return this.glkCurrentStream.size;
+            return 0;
+        };
+		
+		// glk_window_move_cursor
+        handlers[0x2B] = function (id) {
+            return 0;
+        };
+        
+		// glk_set_window
+        handlers[0x2F] = function (id) {
+            if (this.glkWindowOpen) {
+                this.glkCurrentStream = this.glkStreams[id];
+            }
+            return 0;
+        };
+        
+		// glk_stream_iterate
         handlers[0x40] = stub;
-        // glk_stream_open_memory
+        
+		// glk_stream_open_memory
         handlers[0x43] = function (address, size) {
             if (!this.glkNextStreamID)
                 this.glkNextStreamID = 100;
@@ -290,7 +367,8 @@ var FyreVM;
             this.glkStreams[id] = stream;
             return id;
         };
-        // glk_stream_close
+        
+		// glk_stream_close
         handlers[0x44] = function (id, reference) {
             if (!this.glkNextStreamID)
                 this.glkNextStreamID = 100;
@@ -310,6 +388,7 @@ var FyreVM;
             }
             return 0;
         };
+		
         // glk_stream_set_current
         handlers[0x47] = function (id) {
             if (!this.glkNextStreamID)
@@ -319,6 +398,7 @@ var FyreVM;
             this.glkCurrentStream = this.glkStreams[id];
             return 0;
         };
+		
         // glk_stream_get_current
         handlers[0x48] = function (id) {
             if (!this.glkNextStreamID)
@@ -329,37 +409,35 @@ var FyreVM;
                 return this.glkCurrentStream.getId();
             return 0;
         };
-        // glk_window_iterate
-        handlers[0x20] = function (win_id) {
-            if (this.glkWindowOpen && win_id === 0)
-                return 1;
-            return 0;
-        };
-        // glk_fileref_iterate 
+		
+		// glk_fileref_iterate 
         handlers[0x64] = stub;
-        // glk_window_open
-        handlers[0x23] = function () {
-            if (this.glkWindowOpen)
-                return 0;
-            this.glkWindowOpen = true;
-            this.glkStreams[1] = new GlkWindowStream(1, this);
-            return 1;
+		
+		 // glk_put_char
+        handlers[0x80] = function (c) {
+            GlkWrapperWrite.call(this, String.fromCharCode(c & 0xFF));
         };
-        // glk_set_window
-        handlers[0x2F] = function () {
-            if (this.glkWindowOpen) {
-                this.glkCurrentStream = this.glkStreams[1];
-            }
-            return 0;
+		// glk_put_char_stream 
+        handlers[0x81] = function (id, c) {
+			if (!this.glkStreams)
+                this.glkStreams = {};
+            var stream = this.glkStreams[id];
+			if (stream)
+				stream.put(String.fromCharCode(c & 0xFF));
         };
+      
         // glk_set_style
         handlers[0x86] = stub;
+		
         //glk_stylehint_set 
         handlers[0xB0] = stub;
+		
         // glk_style_distinguish
         handlers[0xB2] = stub;
+		
         // glk_style_measure
         handlers[0xB3] = stub;
+		
         // glk_char_to_lower
         handlers[0xA0] = function (ch) {
             return String.fromCharCode(ch).toLowerCase().charCodeAt(0);
@@ -378,10 +456,7 @@ var FyreVM;
         handlers[0xD2] = function () {
             this.glkWantCharInput = true;
         };
-        // glk_put_char
-        handlers[0x80] = function (c) {
-            GlkWrapperWrite.call(this, String.fromCharCode(c));
-        };
+       
         // glk_select 
         handlers[0xC0] = function (reference) {
             this.deliverOutput();
@@ -419,6 +494,22 @@ var FyreVM;
             }
             return 0;
         };
+		
+		 // glk_put_char_uni 
+        handlers[0x0128] = function (c) {
+            GlkWrapperWrite.call(this, String.fromCharCode(c));
+        };
+		
+		// glk_put_char_stream_uni  
+        handlers[0x012B] = function (id, c) {
+            //GlkWrapperWrite.call(this, String.fromCharCode(c));
+			if (!this.glkStreams)
+                this.glkStreams = {};
+            var stream = this.glkStreams[id];
+			if (stream)
+				stream.put(String.fromCharCode(c & 0xFF));
+        };
+		
         return handlers;
     }
     function GlkWriteReference(reference) {
@@ -3177,11 +3268,14 @@ var FyreVM;
         Engine.prototype.fyreCall = function (call, x, y) {
             if (!this.enableFyreVM)
                 throw new Error("FyreVM functionality has been disabled");
+			
             switch (call) {
                 case 1 /* ReadLine */:
                     this.deliverOutput();
+					console.log('inputline');
                     return this.inputLine(x, y);
                 case 2 /* ReadKey */:
+					console.log('inputkey');
                     this.deliverOutput();
                     return this.inputChar();
                 case 3 /* ToLower */:
@@ -3240,10 +3334,24 @@ var FyreVM;
                 return 0;
             }
             var resume = this.resumeAfterWait.bind(this);
+			var transform = {
+				37/*keycode_Left*/     : 0xfffffffe,
+				39/*keycode_Right*/    : 0xfffffffd,
+				38/*keycode_Up*/       : 0xfffffffc,
+				40/*keycode_Down*/     : 0xfffffffb,
+				13/*keycode_Return*/   : 0xfffffffa,
+				46/*keycode_Delete*/   : 0xfffffff9,
+				27/*keycode_Escape*/   : 0xfffffff8,
+				9/*keycode_Tab*/      : 0xfffffff7
+			};
             // ask the application to read a character
             var callback = function (line) {
                 if (line && line.length) {
-                    resume([line.charCodeAt(0)]);
+					var character = line.charCodeAt(0);
+					if (transform[character])
+						character = transform[character];
+					console.log('char sent: ' + character);
+                    resume([character]);
                 }
                 else {
                     resume([0]);
@@ -3351,6 +3459,7 @@ var downloadFile = function(filename, callback){
 };
 
 var sessions = {};
+var sessionsLastAccess = {};
 var initializeZork = function (session) {
 	var sessionId = session.userData.zorkId;
     var buffer = fs.readFileSync('D:\\home\\site\\wwwroot\\messages\\zork.ulx');
@@ -3419,6 +3528,7 @@ var initializeZork = function (session) {
         if (engine['glkHandlers']) {
             engine['glkHandlers'][0x2A] = function () { };
         }
+
         if (x.MAIN !== undefined){
 			var str = x.MAIN;
 			str = str.substring(0, str.length - 1);
@@ -3449,7 +3559,7 @@ var initializeZork = function (session) {
 		});	
 	}
 	
-	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage, saveState: saveState, restoreState };
+	sessions[session.userData.zorkId] = { gameLoaded: true, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState };
 	return sessionId;
 };
 
