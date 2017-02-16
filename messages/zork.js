@@ -3395,8 +3395,8 @@ var fs = require('fs');
 var azure = require('azure-storage');
 
 var createAzureStorageService = function(){
-	var accessKey = 'WJtw5sVBoET5fF6ZSoVKuSxX41GoY+en1bCqzh69UE7nGxefHPuAuXZ2rA3AONpMo44QbIsfjvEq+OsuAdm4Nw==';
-    var storageAccount = 'zork';
+	var accessKey = process.env['AzureStorageKey'];
+    var storageAccount = process.env['AzureStorageName'];
 	return azure.createBlobService(storageAccount, accessKey);
 };
 
