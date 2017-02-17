@@ -3469,8 +3469,9 @@ var checkSessions = function(){
 			toDelete.push(key);
 	});
 	toDelete.forEach(function(key){
-		sessions[key].saveState();
-		delete sessions[key];
+		sessions[key].saveState(function(){
+			delete sessions[key];
+		});
 	});
 };
 var initializeZork = function (session) {
@@ -3482,9 +3483,12 @@ var initializeZork = function (session) {
     var room = "";
     var inputStack = [];
     var outputStack = [];
+	var autoOutput = false;
+	
     zorkGame.buffer = new Uint8Array(buffer);
     zorkGame['maxSize'] = zorkGame.buffer.byteLength * 2;
-    var engine = new FyreVM.Engine(new FyreVM.UlxImage(zorkGame));
+    
+	var engine = new FyreVM.Engine(new FyreVM.UlxImage(zorkGame));
     engine.glkMode = 1;
     engine.lineWanted = function (callback) {
         var callbackWrapper = function (str) { 
@@ -3559,9 +3563,11 @@ var initializeZork = function (session) {
 			
 			var arr = str.split("\n");
 			for(var i=0;i<arr.length;i++) {
-				session.send(arr[i]);
+				outputStack.push(arr[i]);
 			}
-            //session.send(str);
+            if (autoOutput){
+				outputFlush();
+			}
 		}
         prompt_line = x.PRPT || prompt_line;
         room = x.LOCN || room;
@@ -3587,8 +3593,17 @@ var initializeZork = function (session) {
 			callback(q);
 		});	
 	}
+	var outputFlush = function(){
+		for(var i=0;i<outputStack.length;i++) {
+			session.send(outputStack[i]);
+		}
+		outputClean();
+	};
+	var outputClean = function(){
+		outputStack = [];
+	};
 	
-	sessions[session.userData.zorkId] = { gameLoaded: true, lastDate: lastDate, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState };
+	sessions[session.userData.zorkId] = { gameLoaded: true, lastDate: lastDate, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState, autoOutput: autoOutput, outputFlush: outputFlush, outputClean: outputClean };
 	return sessionId;
 };
 
