@@ -48,17 +48,17 @@ bot.dialog('/', function (session) {
 				zork.initializeZork(session);
 				if (restart) {
 					session.send("reiniciando...");
-					zork.sessions[session.userData.zorkId]outputFlush();
+					zork.sessions[session.userData.zorkId].outputFlush();
 					zork.sessions[session.userData.zorkId].autoOutput = true;
 				} else {
 					zork.sessions[session.userData.zorkId].restoreState(function(ok){ 
 						zork.sessions[session.userData.zorkId].autoOutput = true;
 						if(ok) { 
 							session.send("Un segundo!! He encontrado una partida guardada y la he cargado"); 
-							zork.sessions[session.userData.zorkId]outputClean();
+							zork.sessions[session.userData.zorkId].outputClean();
 							zork.sessions[session.userData.zorkId].sendMessage("mirar"); 
 						} else {
-							zork.sessions[session.userData.zorkId]outputFlush();
+							zork.sessions[session.userData.zorkId].outputFlush();
 						}
 					});
 				}
