@@ -3542,6 +3542,17 @@ var initializeZork = function (session) {
 			}
 		});
     };  
+	
+	var outputClean = function(){
+		outputStack = [];
+	};
+	var outputFlush = function(){
+		for(var i=0;i<outputStack.length;i++) {
+			session.send(outputStack[i]);
+		}
+		outputClean();
+	};
+	
     engine.outputReady = function (x) {
 		lastDate = new Date();
 		
@@ -3593,15 +3604,6 @@ var initializeZork = function (session) {
 			callback(q);
 		});	
 	}
-	var outputFlush = function(){
-		for(var i=0;i<outputStack.length;i++) {
-			session.send(outputStack[i]);
-		}
-		outputClean();
-	};
-	var outputClean = function(){
-		outputStack = [];
-	};
 	
 	sessions[session.userData.zorkId] = { gameLoaded: true, lastDate: lastDate, sendMessage: sendMessage, saveState: saveState, restoreState: restoreState, autoOutput: autoOutput, outputFlush: outputFlush, outputClean: outputClean };
 	return sessionId;
