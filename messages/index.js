@@ -49,10 +49,10 @@ bot.dialog('/', function (session) {
 				if (restart) {
 					session.send("reiniciando...");
 					zork.sessions[session.userData.zorkId].outputFlush();
-					zork.sessions[session.userData.zorkId].autoOutput = true;
+					zork.sessions[session.userData.zorkId].setAutoOutput(true);
 				} else {
 					zork.sessions[session.userData.zorkId].restoreState(function(ok){ 
-						zork.sessions[session.userData.zorkId].autoOutput = true;
+						zork.sessions[session.userData.zorkId].setAutoOutput(true);
 						if(ok) { 
 							session.send("Un segundo!! He encontrado una partida guardada y la he cargado"); 
 							zork.sessions[session.userData.zorkId].outputClean();
