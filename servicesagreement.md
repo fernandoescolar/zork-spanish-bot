@@ -35,9 +35,7 @@ Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
  TypeScript port by Thilo Planz and More GLK calls by Fernando Escolar
- https://gist.github.com/thiloplanz/6abf04f957197e9e3912
+   
+# Licencia videojuego Zork en Español
  
- 
- # Licencia videojuego Zork en Español
- 
- El juego que utiliza es una versión de Zork traducida a partir de la versión Inform 7 de La Caverna (Zork). Para más información acerca de Inform 7 puedes visitar http://inform-fiction.org. Y para más información sobre la traducción puedes contactar con su autor Mauricio Díaz (mdiazg77[at]hotmail.com).
+El juego que utiliza es una versión de Zork traducida a partir de la versión Inform 7 de La Caverna (Zork). Para más información acerca de Inform 7 puedes visitar http://inform-fiction.org. Y para más información sobre la traducción puedes contactar con su autor Mauricio Díaz (mdiazg77[at]hotmail.com).
