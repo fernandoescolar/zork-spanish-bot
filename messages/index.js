@@ -63,6 +63,7 @@ bot.dialog('/', function (session) {
 					});
 				}
 			} else {
+				zork.sessions[session.userData.zorkId].setAutoOutput(true);
 				zork.sessions[session.userData.zorkId].sendMessage(session.message.text);
 			}
 		}
