@@ -3493,6 +3493,9 @@ var initializeZork = function (session) {
     engine.lineWanted = function (callback) {
         var callbackWrapper = function (str) { 
 			str = str.replace('abrir', 'destapar');  
+			str = str.replace('mover', 'empujar');  
+			str = str.replace('tirar', 'dejar');  
+			str = str.replace('encender', 'conectar');  
 			if (str === "guardar") { 
 				str = "mirar"; 
 				saveState(function(ok){
